@@ -1,4 +1,5 @@
 import yaml
+import os
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -13,6 +14,11 @@ env = yaml.load(f)
 username = env["username"]
 password = env["password"]
 page_base = "https://bitlendingclub.com"
+
+if not os.path.isfile('latest_investments_report.txt'):
+    open('latest_investments_report.txt', 'w')
+
+f = open('latest_investments_report.txt', 'a')
 
 driver = webdriver.Chrome()
 
@@ -41,7 +47,7 @@ WebDriverWait(driver, default_timeout).until(
 
 print "Dashboard loaded"
 
-#navigate to investments page
+print "Loading first investments page"
 driver.get(page_base + "/profile/investments")
 
 investment_page_counter = 1
@@ -56,26 +62,36 @@ while True:
             else:
                 all_investment_page_data_extracted = True
 
-        print "Loading investment page: " + str(investment_page_counter)
+        if investment_page_counter > 1:
+            print "Loading investment page: " + str(investment_page_counter) 
 
-        #grab all investment links from page
-        print "Grabbing all investment links from page"    
+        print "Grabbing all loan links from page"    
 
-        #for each investment link
+        loan_links = []
 
-            #load up investment page
-        print "Loading each loan page"
+        for link in  driver.find_elements_by_xpath('//*/tr/td[2]/a'):
+            loan_links.append(link.get_attribute("href"))
 
-            #write out infos to txt file
-        print "Writing out infos to file"
+        for loan in loan_links:        
 
-        #return to previous investment listing page
-        driver.get(page_base + "/profile/investments/page/" + str(investment_page_counter))
+            print "Loading loan page: " + loan
+            driver.get(loan)
+            
+            print driver.find_element_by_tag_name('h1').text
+ 
+            print driver.find_element_by_class_name('last-row').text
+
+            print "Writing out infos to file"
+            f.write(driver.find_element_by_tag_name('h1').text + '\n')
+            
+
         print "Returning to current investment listing page"
+        driver.get(page_base + "/profile/investments/page/" + str(investment_page_counter))
+
         WebDriverWait(driver, default_timeout).until(EC.visibility_of_element_located((By.CLASS_NAME, "next")))
 
-        driver.find_element_by_class_name('next').click()
         print "Loading investment page: " + str(investment_page_counter)
+        driver.find_element_by_class_name('next').click()
 
         
         investment_page_counter += 1 
@@ -85,6 +101,7 @@ while True:
        break
 
 driver.close()
+f.close()
 print "Completed cleanly"
 
 
