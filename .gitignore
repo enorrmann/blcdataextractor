@@ -52,3 +52,10 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# Vim
+*.swp
+
+
+# app specific
+
+config.yaml
