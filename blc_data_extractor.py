@@ -50,6 +50,8 @@ driver.get(page_base + "/profile/investments")
 
 investment_page_counter = 1
 all_investment_page_data_extracted = False
+        
+f.write("Title,# Payments,Payments made,Payments remaining,Total invested,Total received,Total remaining,Next payment\n")
 
 while True:
     try:
@@ -67,8 +69,6 @@ while True:
 
         for link in  driver.find_elements_by_xpath('//*/tr/td[2]/a'):
             loan_links.append(link.get_attribute("href"))
-
-        f.write("Title,# Payments,Payments made,Payments remaining,Total invested,Total received,Total remaining,Next payment\n")
 
         for loan in loan_links:        
 
@@ -127,10 +127,3 @@ while True:
 driver.close()
 f.close()
 print "Completed cleanly"
-
-
-
-
-
-
-
