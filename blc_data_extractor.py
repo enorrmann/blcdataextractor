@@ -68,7 +68,7 @@ while True:
         for link in  driver.find_elements_by_xpath('//*/tr/td[2]/a'):
             loan_links.append(link.get_attribute("href"))
 
-        f.write("Title,# Payments,Payments made,Payments remaining,Total invested,Total received, Next payment\n")
+        f.write("Title,# Payments,Payments made,Payments remaining,Total invested,Total received,Total remaining,Next payment\n")
 
         for loan in loan_links:        
 
@@ -93,18 +93,22 @@ while True:
 
             total_remaining = sum([float(row[3]) for row in payments[:-1] if row[2] == '- - -'])
 
-            next_payment = "TBD"
+            next_payment = ""
+
+            if total_remaining > 0:
+                next_payment = [row[1] for row in payments[:-1] if row[2] == '- - -'][0]
 
             print payments_made
             print payments
 
-            f.write("{0},{1},{2},{3},{4},{5},{6}".format(
+            f.write("{0},{1},{2},{3},{4},{5},{6},{7}".format(
                 loan_title.replace(',','.'),
                 number_of_payments,
                 payments_made,
                 payments_remaining,
                 total_invested,
                 total_received,
+                total_remaining,
                 next_payment
             ) + "\n")
 
