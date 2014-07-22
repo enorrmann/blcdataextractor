@@ -1,5 +1,6 @@
 import yaml
 import os
+import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -15,10 +16,10 @@ username = env["username"]
 password = env["password"]
 page_base = "https://bitlendingclub.com"
 
-if not os.path.isfile('latest_investments_report.txt'):
-    open('latest_investments_report.txt', 'w')
+if not os.path.isfile('latest_investments_report.csv'):
+    open('latest_investments_report.csv', 'wb')
 
-f = open('latest_investments_report.txt', 'a')
+f = open('latest_investments_report.csv', 'wb')
 
 driver = webdriver.Chrome()
 
@@ -45,9 +46,6 @@ WebDriverWait(driver, default_timeout).until(
         EC.visibility_of_element_located((By.CLASS_NAME, "name-title"))
     )
 
-print "Dashboard loaded"
-
-print "Loading first investments page"
 driver.get(page_base + "/profile/investments")
 
 investment_page_counter = 1
@@ -65,34 +63,56 @@ while True:
         if investment_page_counter > 1:
             print "Loading investment page: " + str(investment_page_counter) 
 
-        print "Grabbing all loan links from page"    
-
         loan_links = []
 
         for link in  driver.find_elements_by_xpath('//*/tr/td[2]/a'):
             loan_links.append(link.get_attribute("href"))
 
+        f.write("Title,# Payments,Payments made,Payments remaining,Total invested,Total received, Next payment\n")
+
         for loan in loan_links:        
 
-            print "Loading loan page: " + loan
+            payments = []
+
             driver.get(loan)
             
-            print driver.find_element_by_tag_name('h1').text
- 
-            print driver.find_element_by_class_name('last-row').text
+            loan_title = driver.find_element_by_xpath('//h1').text.split('\n')[0].strip()
 
-            print "Writing out infos to file"
-            f.write(driver.find_element_by_tag_name('h1').text + '\n')
-            
+            payment_rows = driver.find_elements_by_xpath('(//tbody)[2]/tr')
 
-        print "Returning to current investment listing page"
+            for row in payment_rows:
+                payments.append([column.text for column in row.find_elements_by_tag_name('td')])
+
+            number_of_payments = len(payment_rows) - 1 
+            payments_made = sum([1 for row in payments[:-1] if row[2] != '- - -'])
+            payments_remaining = number_of_payments - payments_made
+
+            total_invested = payments[-1][6]
+
+            total_received = sum([float(row[3]) for row in payments[:-1] if row[2] != '- - -'])
+
+            total_remaining = sum([float(row[3]) for row in payments[:-1] if row[2] == '- - -'])
+
+            next_payment = "TBD"
+
+            print payments_made
+            print payments
+
+            f.write("{0},{1},{2},{3},{4},{5},{6}".format(
+                loan_title.replace(',','.'),
+                number_of_payments,
+                payments_made,
+                payments_remaining,
+                total_invested,
+                total_received,
+                next_payment
+            ) + "\n")
+
         driver.get(page_base + "/profile/investments/page/" + str(investment_page_counter))
 
         WebDriverWait(driver, default_timeout).until(EC.visibility_of_element_located((By.CLASS_NAME, "next")))
 
-        print "Loading investment page: " + str(investment_page_counter)
         driver.find_element_by_class_name('next').click()
-
         
         investment_page_counter += 1 
 
