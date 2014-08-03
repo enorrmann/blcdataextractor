@@ -96,7 +96,7 @@ while True:
             next_payment = ""
 
             if total_remaining > 0:
-                next_payment = [row[1] for row in payments[:-1] if row[2] == '- - -'][0]
+                next_payment = [row[1].encode("utf8") for row in payments[:-1] if row[2] == '- - -'][0]
 
             print payments_made
             print payments
