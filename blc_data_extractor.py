@@ -24,6 +24,12 @@ if not os.path.isfile('latest_investments_report.csv'):
 
 f = open('latest_investments_report.csv', 'wb')
 
+if not os.path.isfile('payments.json'):
+    open('payments.json', 'wb')
+
+payments_file = open('payments.json', 'wb')
+payments_file.write("[") 
+
 driver = webdriver.Chrome()
 
 driver.get(page_base)
