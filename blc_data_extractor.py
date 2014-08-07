@@ -10,6 +10,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
 default_timeout = 10
+months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+totals = {}
 
 f = open('config.yaml')
 env = yaml.load(f)
@@ -112,6 +114,40 @@ while True:
                 total_remaining,
                 next_payment
             ) + "\n")
+	    
+	    for a_payment in payments:
+	      if a_payment[1] == "- - -":
+		continue
+
+	      event_color = ""
+	      if a_payment[2] == "- - -":
+		event_color = ', "color":"gray"'
+		print "gray"
+	      else :
+		event_color = ', "color":"green"'
+		print "green"
+		
+	      a_date = a_payment[1]
+	      a_year = a_date[7:]
+	      a_month = a_date[3:6]
+	      i_month = months.index(a_month)+1
+	      a_month = str(i_month)
+	      
+	      if i_month < 10:
+		a_month="0"+a_month
+		
+	      a_day = a_date[0:2]
+	      formated_date = a_year+"-"+a_month+"-"+a_day
+	      
+	      if formated_date in totals:
+		totals[formated_date] = totals[formated_date]+float(a_payment[3])
+	      else:
+		totals[formated_date] = float(a_payment[3])
+
+	      a_payment = '"title": "{0}", "start":"{1}" , "url":"{2}"'.format( a_payment[3], formated_date,loan)
+
+
+	      payments_file.write( "{"+ a_payment+event_color+"},\n")
 
         driver.get(page_base + "/profile/investments/page/" + str(investment_page_counter))
 
@@ -125,6 +161,18 @@ while True:
        print "Iterated through all investment pages"     
        break
 
+totals_len = len(totals.keys())
+cur_index = 1
+for total_key in totals.keys():
+  a_payment = '"title": "TOTAL: {0} ", "start":"{1}"'.format( totals[total_key], total_key)
+  a_payment = "{"+ a_payment+', "color":"#5882FA" }'
+  if cur_index < totals_len:
+    a_payment = a_payment+',\n'
+  payments_file.write(a_payment) 
+  cur_index = cur_index + 1
+  
+payments_file.write("]") 
 driver.close()
 f.close()
+payments_file.close()
 print "Completed cleanly"
